@@ -3,24 +3,34 @@ var uiController = (function () {
         inputType: ".add__type",
         inputDesc: ".add__description",
         inputAddValue: ".add__value",
-        btnAdd: ".add__btn"
+        btnAdd: ".add__btn",
+        incomeList: ".income__list",
+        expenseList: ".expenses__list"
     };
 
     return {
         getInput: function () {
             return {
                 type: document.querySelector(DOMstrings.inputType).value,
-                amount: document.querySelector(DOMstrings.inputAddValue).value,
+                amount: parseInt(document.querySelector(DOMstrings.inputAddValue).value),
                 description: document.querySelector(DOMstrings.inputDesc).value
             };
         },
         getDOMstrings: function () {
             return DOMstrings;
         },
+        clearFields: function () {
+            var fields = document.querySelectorAll(DOMstrings.inputDesc + ',' + DOMstrings.inputAddValue);
+            var fieldsArr = Array.prototype.slice.call(fields);
+            fieldsArr.forEach(function (el, index, array) {
+                el.value = "";
+            });
+            fieldsArr[0].focus();
+        },
         addList: function (item, type) {
             var html;
             if (type === 'inc') {
-                list = '.income__list';
+                list = DOMstrings.incomeList;
                 html = '<div class="item clearfix" id="%id%">' +
                     '<div class="item__description" >%desc%</div>' +
                     '<div class="right clearfix">' +
@@ -32,7 +42,7 @@ var uiController = (function () {
                     '</div>';
             }
             else {
-                list = '.expenses__list';
+                list = DOMstrings.expenseList;
                 html = '<div class="item clearfix" id="%id%">' +
                     '<div class="item__description">%desc%</div>' +
                     '<div class="right clearfix">' +
@@ -73,7 +83,9 @@ var financeController = (function () {
         totals: {
             inc: 0,
             exp: 0
-        }
+        },
+        tusuv: 0,
+        huvi: 0
     }
 
     return {
@@ -94,6 +106,19 @@ var financeController = (function () {
             data.allItem[type].push(obj);
             console.log(data.allItem)
             return obj;
+        },
+        addTotal: function (amount, type) {
+            data.totals[type] += amount;
+            data.tusuv = data.totals.inc - data.totals.exp;
+            data.huvi = Math.round((data.totals.exp * 100) / data.totals.inc);
+        },
+        getTusuv: function () {
+            return {
+                tusuv: data.tusuv,
+                huvi: data.huvi,
+                totalInc: data.totals.inc,
+                totalExp: data.totals.exp
+            }
         }
     }
 })();
@@ -101,8 +126,18 @@ var financeController = (function () {
 var appController = (function (uiController, financeController) {
     var ctrlAddItem = function () {
         var input = uiController.getInput();
-        var addItem = financeController.addItem(input.type, input.description, input.amount);
-        var addHtml = uiController.addList(addItem, input.type);
+        if (input.description !== "" && input.amount !== "") {
+            var addItem = financeController.addItem(input.type, input.description, input.amount);
+            uiController.addList(addItem, input.type);
+            uiController.clearFields();
+            financeController.addTotal(input.amount, input.type);
+            var tusuv = financeController.getTusuv();
+            console.log(tusuv);
+            //uiController.showTusuv(tusuv);
+        }
+        else {
+            alert("Тайлбар дүнгээ заавал оруулна уу.");
+        }
     }
 
     var setupEventListeners = function () {
